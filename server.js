@@ -23,7 +23,9 @@ const dbConnect = async () => {
         await client.connect();
         const babyCare = client.db("babyCare");
         const productsDB = babyCare.collection('products');
+        const reviewsDB = babyCare.collection('reviews');
 
+        // Products
         app.get('/products', async (req, res) => {
             const cursor = productsDB.find({});
             if ((await cursor.count()) === 0) {
@@ -31,7 +33,21 @@ const dbConnect = async () => {
             }
             else {
                 const products = await cursor.toArray();
-                res.json(products);
+                const orderedProducts = products.reverse();
+                res.json(orderedProducts);
+            }
+        });
+
+        // Reviews
+        app.get('/reviews', async (req, res) => {
+            const cursor = reviewsDB.find({});
+            if ((await cursor.count()) === 0) {
+                res.send([]);
+            }
+            else {
+                const reviews = await cursor.toArray();
+                const orderedReviews = reviews.reverse();
+                res.json(orderedReviews);
             }
         });
     }
