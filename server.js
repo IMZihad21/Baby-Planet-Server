@@ -38,6 +38,13 @@ const dbConnect = async () => {
             }
         });
 
+        app.get('/products/:productID', async (req, res) => {
+            const productID = req.params.productID;
+            const query = { _id: ObjectId(productID) };
+            const dress = await productsDB.findOne(query);
+            res.json(dress);
+        });
+
         // Reviews
         app.get('/reviews', async (req, res) => {
             const cursor = reviewsDB.find({});
