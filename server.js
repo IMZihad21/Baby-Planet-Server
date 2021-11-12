@@ -23,13 +23,14 @@ const dbConnect = async () => {
         await client.connect();
         const babyCare = client.db("babyCare");
         const productsDB = babyCare.collection('products');
+        const ordersDB = babyCare.collection('orders');
         const reviewsDB = babyCare.collection('reviews');
 
         // Products
         app.get('/products', async (req, res) => {
             const cursor = productsDB.find({});
             if ((await cursor.count()) === 0) {
-                res.send([]);
+                res.json([]);
             }
             else {
                 const products = await cursor.toArray();
@@ -43,6 +44,11 @@ const dbConnect = async () => {
             const query = { _id: ObjectId(productID) };
             const dress = await productsDB.findOne(query);
             res.json(dress);
+        });
+
+        app.post('/orders', async (req, res) => {
+            const result = await ordersDB.insertOne(req.body);
+            res.json(result);
         });
 
         // Reviews
