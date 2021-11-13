@@ -23,7 +23,7 @@ app.use(express.json());
 // Connection to MongoDB
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-async function verifyToken(req, res, next) {
+const verifyToken = async (req, res, next) => {
     if (req.headers?.authorization?.startsWith('Bearer ')) {
         const token = req.headers.authorization.split(' ')[ 1 ];
 
@@ -67,8 +67,8 @@ const dbConnect = async () => {
         });
 
         // Orders
-        app.get('/orders', async (req, res) => {
-            const email = req.query.email;
+        app.get('/orders', verifyToken, async (req, res) => {
+            const email = req.decodedEmail;
             const query = { clientEmail: email }
             const cursor = ordersDB.find(query);
             const orders = await cursor.toArray();
@@ -85,6 +85,21 @@ const dbConnect = async () => {
             const query = { _id: ObjectId(orderID) };
             const result = await ordersDB.deleteOne(query);
             res.json(result);
+        });
+
+        app.put('/orders', async (req, res) => {
+            const orderID = req.query.orderID;
+            const query = { _id: ObjectId(orderID) };
+            const updateDoc = { $set: { orderPending: false } };
+            const options = { upsert: true };
+            const result = await ordersDB.updateOne(query, updateDoc, options);
+            res.json(result);
+        });
+
+        app.get('/allorders', verifyToken, async (req, res) => {
+            const cursor = ordersDB.find({});
+            const orders = await cursor.toArray();
+            res.json(orders);
         });
 
         // Reviews
