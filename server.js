@@ -115,6 +115,11 @@ const dbConnect = async () => {
             }
         });
 
+        app.post('/reviews', async (req, res) => {
+            const result = await reviewsDB.insertOne(req.body);
+            res.json(result);
+        });
+
         // Users
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
