@@ -25,6 +25,7 @@ const dbConnect = async () => {
         const productsDB = babyCare.collection('products');
         const ordersDB = babyCare.collection('orders');
         const reviewsDB = babyCare.collection('reviews');
+        const usersDB = babyCare.collection('users');
 
         // Products
         app.get('/products', async (req, res) => {
@@ -62,6 +63,23 @@ const dbConnect = async () => {
                 const orderedReviews = reviews.reverse();
                 res.json(orderedReviews);
             }
+        });
+
+        // Users
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersDB.findOne(query);
+            res.json({ isAdmin: user?.isAdmin ? user.isAdmin : false });
+        })
+
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersDB.updateOne(filter, updateDoc, options);
+            res.json(result);
         });
     }
     finally {
