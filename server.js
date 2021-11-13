@@ -66,6 +66,18 @@ const dbConnect = async () => {
             res.json(dress);
         });
 
+        app.post('/products', async (req, res) => {
+            const result = await productsDB.insertOne(req.body);
+            res.json(result);
+        });
+
+        app.delete('/products', async (req, res) => {
+            const productID = req.query.productID;
+            const query = { _id: ObjectId(productID) };
+            const result = await productsDB.deleteOne(query);
+            res.json(result);
+        });
+
         // Orders
         app.get('/orders', verifyToken, async (req, res) => {
             const email = req.decodedEmail;
