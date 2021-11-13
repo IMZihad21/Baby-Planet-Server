@@ -1,23 +1,42 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
-const dotenv = require('dotenv');
 const cors = require('cors')
+const admin = require("firebase-admin");
 const ObjectId = require('mongodb').ObjectId;
+
+// Read from ENV
+require('dotenv').config();
+const port = process.env.PORT || 9000;
+const uri = process.env.MONGODB_URI;
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 // Initialize App
 const app = express();
-dotenv.config();
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Read from ENV
-const port = process.env.PORT || 9000;
-const uri = process.env.MONGODB_URI;
-
 // Connection to MongoDB
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith('Bearer ')) {
+        const token = req.headers.authorization.split(' ')[ 1 ];
+
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(token);
+            req.decodedEmail = decodedUser.email;
+        }
+        catch {
+        }
+    }
+    next();
+}
+
 const dbConnect = async () => {
     try {
         await client.connect();
@@ -81,6 +100,24 @@ const dbConnect = async () => {
             const result = await usersDB.updateOne(filter, updateDoc, options);
             res.json(result);
         });
+
+        app.put('/users/admin', verifyToken, async (req, res) => {
+            const user = req.body;
+            const requester = req.decodedEmail;
+            if (requester) {
+                const requesterAccount = await usersCollection.findOne({ email: requester });
+                if (requesterAccount.role === 'admin') {
+                    const filter = { email: user.email };
+                    const updateDoc = { $set: { role: 'admin' } };
+                    const result = await usersCollection.updateOne(filter, updateDoc);
+                    res.json(result);
+                }
+            }
+            else {
+                res.status(403).json({ message: 'you do not have access to make admin' })
+            }
+
+        })
     }
     finally {
         console.log('Connection to MongoDB successfull');
