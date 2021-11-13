@@ -66,8 +66,24 @@ const dbConnect = async () => {
             res.json(dress);
         });
 
+        // Orders
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+            const query = { clientEmail: email }
+            const cursor = ordersDB.find(query);
+            const orders = await cursor.toArray();
+            res.json(orders);
+        });
+
         app.post('/orders', async (req, res) => {
             const result = await ordersDB.insertOne(req.body);
+            res.json(result);
+        });
+
+        app.delete('/orders', async (req, res) => {
+            const orderID = req.query.orderID;
+            const query = { _id: ObjectId(orderID) };
+            const result = await ordersDB.deleteOne(query);
             res.json(result);
         });
 
